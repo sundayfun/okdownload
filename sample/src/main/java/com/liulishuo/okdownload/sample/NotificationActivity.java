@@ -108,7 +108,6 @@ public class NotificationActivity extends BaseSampleActivity {
                 .setMinIntervalMillisCallbackProcess(80)
                 // because for the notification we don't need make sure invoke on the ui thread, so
                 // just let callback no need callback to the ui thread.
-                .setAutoCallbackToUIThread(false)
                 .build();
     }
 

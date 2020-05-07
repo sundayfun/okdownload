@@ -500,6 +500,7 @@ public class DownloadDispatcher {
     private void attachToActiveListener(DownloadCall call, DownloadTask conflictTask) {
         DownloadListener activeListener = call.task.getListener();
         DownloadListener listener = conflictTask.getListener();
+        if (listener == activeListener) return;
         if (listener instanceof DownloadListener1) {
             ((DownloadListener1) listener).setAlwaysRecoverAssistModelIfNotSet(true);
         } else if (listener instanceof DownloadListener4) {

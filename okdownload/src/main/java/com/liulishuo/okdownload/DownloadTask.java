@@ -617,7 +617,6 @@ public class DownloadTask extends IdentifiedTask implements Comparable<DownloadT
                 .setFlushBufferSize(flushBufferSize)
                 .setSyncBufferSize(syncBufferSize)
                 .setSyncBufferIntervalMillis(syncBufferIntervalMills)
-                .setAutoCallbackToUIThread(autoCallbackToUIThread)
                 .setMinIntervalMillisCallbackProcess(minIntervalMillisCallbackProcess)
                 .setHeaderMapFields(headerMapFields)
                 .setPassIfAlreadyCompleted(passIfAlreadyCompleted);
@@ -788,17 +787,6 @@ public class DownloadTask extends IdentifiedTask implements Comparable<DownloadT
 
             isFilenameFromResponse = filenameFromResponse;
 
-            return this;
-        }
-
-        /**
-         * Set whether callback to UI thread automatically.
-         * default is {@link #DEFAULT_AUTO_CALLBACK_TO_UI_THREAD}
-         *
-         * @param autoCallbackToUIThread whether callback to ui thread automatically.
-         */
-        public Builder setAutoCallbackToUIThread(boolean autoCallbackToUIThread) {
-            this.autoCallbackToUIThread = autoCallbackToUIThread;
             return this;
         }
 
