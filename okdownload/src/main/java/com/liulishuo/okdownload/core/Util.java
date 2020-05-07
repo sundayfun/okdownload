@@ -42,6 +42,8 @@ import com.liulishuo.okdownload.core.connection.DownloadConnection;
 import com.liulishuo.okdownload.core.connection.DownloadUrlConnection;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
@@ -94,13 +96,21 @@ public class Util {
     }
 
     public static class EmptyLogger implements Logger {
-        @Override public void e(String tag, String msg, Exception e) { }
+        @Override
+        public void e(String tag, String msg, Exception e) {
+        }
 
-        @Override public void w(String tag, String msg) { }
+        @Override
+        public void w(String tag, String msg) {
+        }
 
-        @Override public void d(String tag, String msg) { }
+        @Override
+        public void d(String tag, String msg) {
+        }
 
-        @Override public void i(String tag, String msg) { }
+        @Override
+        public void i(String tag, String msg) {
+        }
     }
 
     @SuppressWarnings("PMD.LoggerIsNotStaticFinal")
@@ -242,7 +252,8 @@ public class Util {
         return String.format(Locale.ENGLISH, "%.1f %sB", bytes / Math.pow(unit, exp), pre);
     }
 
-    public static @NonNull DownloadStore createDefaultDatabase(Context context) {
+    public static @NonNull
+    DownloadStore createDefaultDatabase(Context context) {
         // You can import through com.liulishuo.okdownload:sqlite:{version}
         final String storeOnSqliteClassName
                 = "com.liulishuo.okdownload.core.breakpoint.BreakpointStoreOnSQLite";
@@ -261,7 +272,8 @@ public class Util {
         return new BreakpointStoreOnCache();
     }
 
-    public static @NonNull DownloadStore createRemitDatabase(@NonNull DownloadStore originStore) {
+    public static @NonNull
+    DownloadStore createRemitDatabase(@NonNull DownloadStore originStore) {
         DownloadStore finalStore = originStore;
         try {
             final Method createRemitSelf = originStore.getClass()
@@ -276,7 +288,8 @@ public class Util {
         return finalStore;
     }
 
-    public static @NonNull DownloadConnection.Factory createDefaultConnectionFactory() {
+    public static @NonNull
+    DownloadConnection.Factory createDefaultConnectionFactory() {
         final String okhttpConnectionClassName
                 = "com.liulishuo.okdownload.core.connection.DownloadOkHttp3Connection$Factory";
         try {
@@ -454,5 +467,33 @@ public class Util {
     public static void addDefaultUserAgent(@NonNull final DownloadConnection connection) {
         final String userAgent = "OkDownload/" + BuildConfig.VERSION_NAME;
         connection.addHeader(USER_AGENT, userAgent);
+    }
+
+    public static boolean renameFile(File src, File dest) {
+        try {
+            return src.renameTo(dest);
+        } catch (Exception e) {
+            try {
+                return copyFile(src, dest);
+            } catch (IOException ex) {
+                return false;
+            }
+        }
+    }
+
+    public static boolean copyFile(File sourceFile, File destFile) throws IOException {
+        if (sourceFile.equals(destFile)) {
+            return true;
+        }
+        if (!destFile.exists()) {
+            destFile.createNewFile();
+        }
+        try (FileInputStream source = new FileInputStream(sourceFile); FileOutputStream destination = new FileOutputStream(destFile)) {
+            destination.getChannel().transferFrom(source.getChannel(), 0, source.getChannel().size());
+        } catch (Exception e) {
+            Util.e("Util", "failed to get connectivity manager!", e);
+            return false;
+        }
+        return true;
     }
 }

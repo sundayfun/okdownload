@@ -68,11 +68,11 @@ public class StatusUtil {
                     && targetFile.exists()
                     && info.getTotalOffset() == info.getTotalLength()) {
                 return Status.COMPLETED;
-            } else if (filename == null && info.getFile() != null
-                    && info.getFile().exists()) {
+            } else if (filename == null && info.getTempFile() != null
+                    && info.getTempFile().exists()) {
                 return Status.IDLE;
-            } else if (targetFile != null && targetFile.equals(info.getFile())
-                    && targetFile.exists()) {
+            } else if (task.getTempFile() != null && task.getTempFile().equals(info.getTempFile())
+                    && task.getTempFile().exists()) {
                 return Status.IDLE;
             }
         } else if (store.isOnlyMemoryCache() || store.isFileDirty(task.getId())) {

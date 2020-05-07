@@ -185,7 +185,7 @@ public class DownloadCall extends NamedRunnable implements Comparable<DownloadCa
             cache.setRedirectLocation(task.getRedirectLocation());
 
             // 3. waiting for file lock release after file path is confirmed.
-            fileStrategy.getFileLock().waitForRelease(task.getFile().getAbsolutePath());
+            fileStrategy.getFileLock().waitForRelease(task.getTempFile().getAbsolutePath());
 
             // 4. reuse another info if another info is idle and available for reuse.
             OkDownload.with().downloadStrategy()
@@ -225,7 +225,14 @@ public class DownloadCall extends NamedRunnable implements Comparable<DownloadCa
             start(cache, info);
 
             if (canceled) break;
-
+            final boolean isFileScheme = Util.isUriFileScheme(task.getUri());
+            //8.rename the temp file to the target file 
+            if (isFileScheme) {
+                boolean renameResult = Util.renameFile(task.getTempFile(), task.getFile());
+                if (!renameResult) {
+                    cache.setUnknownError(new IOException(String.format("rename fail src:%s dest:%s", task.getTempFile().getAbsolutePath(), task.getFile().getAbsolutePath())));
+                }
+            }
             // 8. retry if precondition failed.
             if (cache.isPreconditionFailed()
                     && retryCount++ < MAX_COUNT_RETRY_FOR_PRECONDITION_FAILED) {
@@ -348,7 +355,8 @@ public class DownloadCall extends NamedRunnable implements Comparable<DownloadCa
                 if (!future.isDone()) {
                     try {
                         future.get();
-                    } catch (CancellationException | ExecutionException ignore) { }
+                    } catch (CancellationException | ExecutionException ignore) {
+                    }
                 }
             }
         } catch (Throwable t) {
@@ -362,13 +370,15 @@ public class DownloadCall extends NamedRunnable implements Comparable<DownloadCa
     }
 
     // convenient for unit-test
-    @NonNull BreakpointLocalCheck createLocalCheck(@NonNull BreakpointInfo info,
-                                                   long responseInstanceLength) {
+    @NonNull
+    BreakpointLocalCheck createLocalCheck(@NonNull BreakpointInfo info,
+                                          long responseInstanceLength) {
         return new BreakpointLocalCheck(task, info, responseInstanceLength);
     }
 
     // convenient for unit-test
-    @NonNull BreakpointRemoteCheck createRemoteCheck(@NonNull BreakpointInfo info) {
+    @NonNull
+    BreakpointRemoteCheck createRemoteCheck(@NonNull BreakpointInfo info) {
         return new BreakpointRemoteCheck(task, info);
     }
 
@@ -395,7 +405,7 @@ public class DownloadCall extends NamedRunnable implements Comparable<DownloadCa
     }
 
     @Nullable public File getFile() {
-        return this.task.getFile();
+        return this.task.getTempFile();
     }
 
     @SuppressFBWarnings(value = "Eq", justification = "This special case is just for task priority")

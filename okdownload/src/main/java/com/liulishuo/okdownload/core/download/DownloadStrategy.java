@@ -119,7 +119,7 @@ public class DownloadStrategy {
             return false;
         }
 
-        if (anotherInfo.getFile() == null || !anotherInfo.getFile().exists()) return false;
+        if (anotherInfo.getTempFile() == null || !anotherInfo.getTempFile().exists()) return false;
 
         info.reuseBlocks(anotherInfo);
 
@@ -232,6 +232,7 @@ public class DownloadStrategy {
 
     public static class FilenameHolder {
         private volatile String filename;
+        private String tempFilename;
         private final boolean filenameProvidedByConstruct;
 
         public FilenameHolder() {
@@ -240,20 +241,30 @@ public class DownloadStrategy {
 
         public FilenameHolder(@NonNull String filename) {
             this.filename = filename;
+            this.tempFilename = filename + ".dtemp";
             this.filenameProvidedByConstruct = true;
         }
 
         void set(@NonNull String filename) {
             this.filename = filename;
+            this.tempFilename = filename + ".dtemp";
         }
 
-        @Nullable public String get() { return filename; }
+        @Nullable
+        public String get() {
+            return filename;
+        }
+
+        public String getTemp() {
+            return tempFilename;
+        }
 
         public boolean isFilenameProvidedByConstruct() {
             return filenameProvidedByConstruct;
         }
 
-        @Override public boolean equals(Object obj) {
+        @Override
+        public boolean equals(Object obj) {
             if (super.equals(obj)) return true;
 
             if (obj instanceof FilenameHolder) {
@@ -267,14 +278,17 @@ public class DownloadStrategy {
             return false;
         }
 
-        @Override public int hashCode() {
+        @Override
+        public int hashCode() {
             return filename == null ? 0 : filename.hashCode();
         }
     }
 
     public static class ResumeAvailableResponseCheck {
-        @NonNull private DownloadConnection.Connected connected;
-        @NonNull private BreakpointInfo info;
+        @NonNull
+        private DownloadConnection.Connected connected;
+        @NonNull
+        private BreakpointInfo info;
         private int blockIndex;
 
         protected ResumeAvailableResponseCheck(@NonNull DownloadConnection.Connected connected,
@@ -306,10 +320,11 @@ public class DownloadStrategy {
         }
     }
 
-    @Nullable public ResumeFailedCause getPreconditionFailedCause(int responseCode,
-                                                                  boolean isAlreadyProceed,
-                                                                  @NonNull BreakpointInfo info,
-                                                                  @Nullable String responseEtag) {
+    @Nullable
+    public ResumeFailedCause getPreconditionFailedCause(int responseCode,
+                                                        boolean isAlreadyProceed,
+                                                        @NonNull BreakpointInfo info,
+                                                        @Nullable String responseEtag) {
         final String localEtag = info.getEtag();
         if (responseCode == HttpURLConnection.HTTP_PRECON_FAILED) {
             return RESPONSE_PRECONDITION_FAILED;
