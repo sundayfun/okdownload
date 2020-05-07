@@ -21,6 +21,7 @@ import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.liulishuo.okdownload.DownloadListener;
 import com.liulishuo.okdownload.DownloadTask;
 import com.liulishuo.okdownload.OkDownload;
 import com.liulishuo.okdownload.StatusUtil;
@@ -29,6 +30,9 @@ import com.liulishuo.okdownload.core.Util;
 import com.liulishuo.okdownload.core.breakpoint.DownloadStore;
 import com.liulishuo.okdownload.core.cause.EndCause;
 import com.liulishuo.okdownload.core.download.DownloadCall;
+import com.liulishuo.okdownload.core.listener.DownloadListener1;
+import com.liulishuo.okdownload.core.listener.DownloadListener4;
+import com.liulishuo.okdownload.core.listener.DownloadListenerBunch;
 
 import java.io.File;
 import java.net.UnknownHostException;
@@ -391,14 +395,14 @@ public class DownloadDispatcher {
 
     public synchronized boolean isFileConflictAfterRun(@NonNull DownloadTask task) {
         Util.d(TAG, "is file conflict after run: " + task.getId());
-        final File file = task.getFile();
+        final File file = task.getTempFile();
         if (file == null) return false;
 
         // Other one is running, cancel the current task.
         for (DownloadCall syncCall : runningSyncCalls) {
             if (syncCall.isCanceled() || syncCall.task == task) continue;
 
-            final File otherFile = syncCall.task.getFile();
+            final File otherFile = syncCall.task.getTempFile();
             if (otherFile != null && file.equals(otherFile)) {
                 return true;
             }
@@ -407,7 +411,7 @@ public class DownloadDispatcher {
         for (DownloadCall asyncCall : runningAsyncCalls) {
             if (asyncCall.isCanceled() || asyncCall.task == task) continue;
 
-            final File otherFile = asyncCall.task.getFile();
+            final File otherFile = asyncCall.task.getTempFile();
             if (otherFile != null && file.equals(otherFile)) {
                 return true;
             }
@@ -459,7 +463,6 @@ public class DownloadDispatcher {
                                @NonNull Collection<DownloadCall> calls,
                                @Nullable Collection<DownloadTask> sameTaskList,
                                @Nullable Collection<DownloadTask> fileBusyList) {
-        final CallbackDispatcher callbackDispatcher = OkDownload.with().callbackDispatcher();
         final Iterator<DownloadCall> iterator = calls.iterator();
         while (iterator.hasNext()) {
             DownloadCall call = iterator.next();
@@ -473,23 +476,19 @@ public class DownloadDispatcher {
                     iterator.remove();
                     return false;
                 }
-
+                attachToActiveListener(call, task);
                 if (sameTaskList != null) {
                     sameTaskList.add(task);
-                } else {
-                    callbackDispatcher.dispatch()
-                            .taskEnd(task, EndCause.SAME_TASK_BUSY, null);
                 }
                 return true;
             }
 
             final File file = call.getFile();
-            final File taskFile = task.getFile();
+            final File taskFile = task.getTempFile();
             if (file != null && taskFile != null && file.equals(taskFile)) {
+                attachToActiveListener(call, task);
                 if (fileBusyList != null) {
                     fileBusyList.add(task);
-                } else {
-                    callbackDispatcher.dispatch().taskEnd(task, EndCause.FILE_BUSY, null);
                 }
                 return true;
             }
@@ -497,6 +496,24 @@ public class DownloadDispatcher {
 
         return false;
     }
+
+    private void attachToActiveListener(DownloadCall call, DownloadTask conflictTask) {
+        DownloadListener activeListener = call.task.getListener();
+        DownloadListener listener = conflictTask.getListener();
+        if (listener instanceof DownloadListener1) {
+            ((DownloadListener1) listener).setAlwaysRecoverAssistModelIfNotSet(true);
+        } else if (listener instanceof DownloadListener4) {
+            ((DownloadListener4) listener).setAlwaysRecoverAssistModelIfNotSet(true);
+        }
+        DownloadListenerBunch newListener = new DownloadListenerBunch.Builder()
+                .append(activeListener)
+                .append(listener)
+                .build();
+        call.task.replaceListener(newListener);
+        Util.d(TAG, "task: " + conflictTask.getId()
+                + " is conflicted, rebind listener to active task");
+    }
+
 
     private synchronized void processCalls() {
         if (skipProceedCallCount.get() > 0) return;

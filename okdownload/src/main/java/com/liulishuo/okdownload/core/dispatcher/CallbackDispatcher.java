@@ -91,8 +91,7 @@ public class CallbackDispatcher {
     public void endTasks(@NonNull final Collection<DownloadTask> completedTaskCollection,
                          @NonNull final Collection<DownloadTask> sameTaskConflictCollection,
                          @NonNull final Collection<DownloadTask> fileBusyCollection) {
-        if (completedTaskCollection.size() == 0 && sameTaskConflictCollection.size() == 0
-                && fileBusyCollection.size() == 0) {
+        if (completedTaskCollection.size() == 0) {
             return;
         }
 
@@ -111,46 +110,43 @@ public class CallbackDispatcher {
             }
         }
 
+//
+//        if (sameTaskConflictCollection.size() > 0) {
+//            final Iterator<DownloadTask> iterator = sameTaskConflictCollection.iterator();
+//            while (iterator.hasNext()) {
+//                final DownloadTask task = iterator.next();
+//                if (!task.isAutoCallbackToUIThread()) {
+//                    task.getListener().taskEnd(task, EndCause.SAME_TASK_BUSY, null);
+//                    iterator.remove();
+//                }
+//            }
+//        }
+//
+//        if (fileBusyCollection.size() > 0) {
+//            final Iterator<DownloadTask> iterator = fileBusyCollection.iterator();
+//            while (iterator.hasNext()) {
+//                final DownloadTask task = iterator.next();
+//                if (!task.isAutoCallbackToUIThread()) {
+//                    task.getListener().taskEnd(task, EndCause.FILE_BUSY, null);
+//                    iterator.remove();
+//                }
+//            }
+//        }
 
-        if (sameTaskConflictCollection.size() > 0) {
-            final Iterator<DownloadTask> iterator = sameTaskConflictCollection.iterator();
-            while (iterator.hasNext()) {
-                final DownloadTask task = iterator.next();
-                if (!task.isAutoCallbackToUIThread()) {
-                    task.getListener().taskEnd(task, EndCause.SAME_TASK_BUSY, null);
-                    iterator.remove();
-                }
-            }
-        }
-
-        if (fileBusyCollection.size() > 0) {
-            final Iterator<DownloadTask> iterator = fileBusyCollection.iterator();
-            while (iterator.hasNext()) {
-                final DownloadTask task = iterator.next();
-                if (!task.isAutoCallbackToUIThread()) {
-                    task.getListener().taskEnd(task, EndCause.FILE_BUSY, null);
-                    iterator.remove();
-                }
-            }
-        }
-
-        if (completedTaskCollection.size() == 0 && sameTaskConflictCollection.size() == 0
-                && fileBusyCollection.size() == 0) {
+        if (completedTaskCollection.size() == 0 ) {
             return;
         }
 
-        uiHandler.post(new Runnable() {
-            @Override public void run() {
-                for (DownloadTask task : completedTaskCollection) {
-                    task.getListener().taskEnd(task, EndCause.COMPLETED, null);
-                }
-                for (DownloadTask task : sameTaskConflictCollection) {
-                    task.getListener().taskEnd(task, EndCause.SAME_TASK_BUSY, null);
-                }
-                for (DownloadTask task : fileBusyCollection) {
-                    task.getListener().taskEnd(task, EndCause.FILE_BUSY, null);
-                }
+        uiHandler.post(() -> {
+            for (DownloadTask task : completedTaskCollection) {
+                task.getListener().taskEnd(task, EndCause.COMPLETED, null);
             }
+//            for (DownloadTask task : sameTaskConflictCollection) {
+//                task.getListener().taskEnd(task, EndCause.SAME_TASK_BUSY, null);
+//            }
+//            for (DownloadTask task : fileBusyCollection) {
+//                task.getListener().taskEnd(task, EndCause.FILE_BUSY, null);
+//            }
         });
     }
 

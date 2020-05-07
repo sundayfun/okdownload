@@ -29,6 +29,8 @@ import com.liulishuo.okdownload.core.breakpoint.BlockInfo;
 import com.liulishuo.okdownload.core.breakpoint.BreakpointInfo;
 import com.liulishuo.okdownload.core.cause.EndCause;
 import com.liulishuo.okdownload.core.cause.ResumeFailedCause;
+import com.liulishuo.okdownload.core.listener.DownloadListener1;
+import com.liulishuo.okdownload.core.listener.assist.Listener1Assist;
 import com.liulishuo.okdownload.sample.R;
 
 import java.util.List;
@@ -104,9 +106,10 @@ public class EachBlockProgressUtil {
         ProgressUtil.updateProgressToViewWithMark(progressBar, currentOffset);
     }
 
-    @Nullable public static ProgressBar getProgressBar(final int blockIndex,
-                                                       ProgressBar block0Pb, ProgressBar block1Pb,
-                                                       ProgressBar block2Pb, ProgressBar block3Pb) {
+    @Nullable
+    public static ProgressBar getProgressBar(final int blockIndex,
+                                             ProgressBar block0Pb, ProgressBar block1Pb,
+                                             ProgressBar block2Pb, ProgressBar block3Pb) {
         if (blockIndex == 0) {
             return block0Pb;
         } else if (blockIndex == 1) {
@@ -120,11 +123,12 @@ public class EachBlockProgressUtil {
         }
     }
 
-    @Nullable public static TextView getSpeedTv(int blockIndex,
-                                                final TextView block0SpeedTv,
-                                                final TextView block1SpeedTv,
-                                                final TextView block2SpeedTv,
-                                                final TextView block3SpeedTv) {
+    @Nullable
+    public static TextView getSpeedTv(int blockIndex,
+                                      final TextView block0SpeedTv,
+                                      final TextView block1SpeedTv,
+                                      final TextView block2SpeedTv,
+                                      final TextView block3SpeedTv) {
         if (blockIndex == 0) {
             return block0SpeedTv;
         } else if (blockIndex == 1) {
@@ -149,10 +153,35 @@ public class EachBlockProgressUtil {
     }
 
     public static DownloadListener createSampleListener(final TextView extInfoTv) {
-        return new DownloadListener() {
-            @Override public void taskStart(@NonNull DownloadTask task) {
+        return new DownloadListener1() {
+            @Override
+            public void taskStart(@NonNull DownloadTask task, @NonNull Listener1Assist.Listener1Model model) {
                 extInfoTv.setText(R.string.task_start);
+
             }
+
+            @Override
+            public void retry(@NonNull DownloadTask task, @NonNull ResumeFailedCause cause) {
+
+            }
+
+            @Override
+            public void connected(@NonNull DownloadTask task, int blockCount, long currentOffset, long totalLength) {
+
+            }
+
+            @Override
+            public void progress(@NonNull DownloadTask task, long currentOffset, long totalLength) {
+                float progress = currentOffset * 1f / totalLength * 100;
+                extInfoTv.setText("progrss: " + progress);
+            }
+
+            @Override
+            public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause, @NonNull Listener1Assist.Listener1Model model) {
+                final String status = "Task" + task.getId() + " End with: " + cause;
+                extInfoTv.setText(status);
+            }
+
 
             @Override
             public void connectTrialStart(@NonNull DownloadTask task,
@@ -166,19 +195,22 @@ public class EachBlockProgressUtil {
                 extInfoTv.setText(R.string.connect_trial_end);
             }
 
-            @Override public void downloadFromBeginning(@NonNull DownloadTask task,
-                                                        @NonNull BreakpointInfo info,
-                                                        @NonNull ResumeFailedCause cause) {
+            @Override
+            public void downloadFromBeginning(@NonNull DownloadTask task,
+                                              @NonNull BreakpointInfo info,
+                                              @NonNull ResumeFailedCause cause) {
                 extInfoTv.setText(R.string.download_from_beginning);
             }
 
-            @Override public void downloadFromBreakpoint(@NonNull DownloadTask task,
-                                                         @NonNull BreakpointInfo info) {
+            @Override
+            public void downloadFromBreakpoint(@NonNull DownloadTask task,
+                                               @NonNull BreakpointInfo info) {
                 extInfoTv.setText(R.string.download_from_breakpoint);
             }
 
-            @Override public void connectStart(@NonNull DownloadTask task, int blockIndex,
-                                               @NonNull Map<String, List<String>> requestHeaders) {
+            @Override
+            public void connectStart(@NonNull DownloadTask task, int blockIndex,
+                                     @NonNull Map<String, List<String>> requestHeaders) {
                 extInfoTv.setText(R.string.connect_start);
             }
 
@@ -194,22 +226,10 @@ public class EachBlockProgressUtil {
             }
 
             @Override
-            public void fetchProgress(@NonNull DownloadTask task, int blockIndex,
-                                      long increaseBytes) {
-                extInfoTv.setText(R.string.fetch_progress);
-            }
-
-            @Override
             public void fetchEnd(@NonNull DownloadTask task, int blockIndex, long contentLength) {
                 extInfoTv.setText(R.string.fetch_end);
             }
 
-            @Override
-            public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause,
-                                @Nullable Exception realCause) {
-                final String status = "Task" + task.getId() + " End with: " + cause;
-                extInfoTv.setText(status);
-            }
         };
     }
 }

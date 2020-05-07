@@ -91,6 +91,12 @@ class BunchActivity : BaseSampleActivity() {
 
     private fun initAction() {
         startOrCancelView?.setOnClickListener { v ->
+            bunchDir.listFiles()?.forEach {
+                Log.d(
+                    "BunchActivity",
+                    "bunch file: ${it.absolutePath}"
+                )
+            }
             if (v.tag == null) {
                 // start
                 val startTime = SystemClock.uptimeMillis()
@@ -103,7 +109,7 @@ class BunchActivity : BaseSampleActivity() {
                     "BunchActivity",
                     "before bind bunch task consume ${SystemClock.uptimeMillis() - startTime} ms"
                 )
-                for (i in urls.indices) {
+                for (i in 0..10) {
                     builder.bind(urls[i]).addTag(INDEX_TAG, i)
                 }
 
@@ -142,9 +148,12 @@ class BunchActivity : BaseSampleActivity() {
                                 )
                             }
                         }
-                    ) { task, cause, _, _ ->
+                    ) { task, cause, realCause, _ ->
                         fillPbInfo(task, "end $cause")
-
+                        Log.d(
+                            "BunchActivity",
+                            "task end  cause : $cause , realCause: $realCause id:${task.id} tag: ${task.getTag(INDEX_TAG)}"
+                        )
                         currentCount += 1
                         updateBunchInfoAndProgress()
 
@@ -241,7 +250,6 @@ class BunchActivity : BaseSampleActivity() {
         private const val CURRENT_PROGRESS = 2
         private val urls = arrayOf(
             // 随机小资源一般不超过10
-            "http://girlatlas.b0.upaiyun.com/35/20150106/19152b4c633b321f4479.jpg!mid",
             "http://cdn-l.llsapp.com/connett/25183b40-22f2-0133-6e99-029df5130f9e",
             "http://cdn-l.llsapp.com/connett/c3115411-3669-466d-8ef2-e6c42c690303",
             "http://cdn-l.llsapp.com/connett/a55b4727-e228-410f-b44a-0385dbe9ab85",
