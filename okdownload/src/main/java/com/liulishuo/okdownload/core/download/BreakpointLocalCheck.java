@@ -90,10 +90,11 @@ public class BreakpointLocalCheck {
 
         if (blockCount <= 0) return false;
         if (info.isChunked()) return false;
-        if (info.getFile() == null) return false;
-        final File fileOnTask = task.getFile();
-        if (!info.getFile().equals(fileOnTask)) return false;
-        if (info.getFile().length() > info.getTotalLength()) return false;
+        if (info.getTempFile() == null) return false;
+        final File fileOnTask = task.getTempFile();
+
+        if (!info.getTempFile().equals(fileOnTask)) return false;
+        if (info.getTempFile().length() > info.getTotalLength()) return false;
 
         if (responseInstanceLength > 0 && info.getTotalLength() != responseInstanceLength) {
             return false;
@@ -122,7 +123,7 @@ public class BreakpointLocalCheck {
         if (Util.isUriContentScheme(uri)) {
             return Util.getSizeFromContentUri(uri) > 0;
         } else {
-            final File file = task.getFile();
+            final File file = task.getTempFile();
             return file != null && file.exists();
         }
     }

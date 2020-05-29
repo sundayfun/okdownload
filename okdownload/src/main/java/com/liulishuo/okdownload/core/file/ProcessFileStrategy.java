@@ -41,7 +41,7 @@ public class ProcessFileStrategy {
 
     public void discardProcess(@NonNull DownloadTask task) throws IOException {
         // Remove target file.
-        final File file = task.getFile();
+        final File file = task.getTempFile();
         // Do nothing, because the filename hasn't found yet.
         if (file == null) return;
 

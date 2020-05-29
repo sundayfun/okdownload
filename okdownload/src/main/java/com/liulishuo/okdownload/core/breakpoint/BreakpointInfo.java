@@ -32,8 +32,12 @@ public class BreakpointInfo {
     private final String url;
     private String etag;
 
-    @NonNull final File parentFile;
-    @Nullable private File targetFile;
+    @NonNull
+    final File parentFile;
+    @Nullable
+    private File targetFile;
+    @Nullable
+    private File tempFile;
     private final DownloadStrategy.FilenameHolder filenameHolder;
 
     private final List<BlockInfo> blockInfoList;
@@ -160,7 +164,8 @@ public class BreakpointInfo {
         return url;
     }
 
-    @Nullable public String getFilename() {
+    @Nullable
+    public String getFilename() {
         return filenameHolder.get();
     }
 
@@ -168,12 +173,25 @@ public class BreakpointInfo {
         return filenameHolder;
     }
 
-    @Nullable public File getFile() {
+    @Nullable
+    public File getFile() {
         final String filename = this.filenameHolder.get();
         if (filename == null) return null;
         if (targetFile == null) targetFile = new File(parentFile, filename);
 
         return targetFile;
+    }
+
+    @Nullable
+    public File getTempFile() {
+//        if (Util.isUriFileScheme(uri)) {
+        final String filename = filenameHolder.getTemp();
+        if (filename == null) return null;
+        if (tempFile == null) tempFile = new File(parentFile, filename);
+        return tempFile;
+//        } else {
+//            return getFile();
+//        }
     }
 
     public BreakpointInfo copy() {
@@ -234,7 +252,8 @@ public class BreakpointInfo {
         return false;
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
         return "id[" + id + "]" + " url[" + url + "]" + " etag[" + etag + "]"
                 + " taskOnlyProvidedParentPath[" + taskOnlyProvidedParentPath + "]"
                 + " parent path[" + parentFile + "]" + " filename[" + filenameHolder.get() + "]"

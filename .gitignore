@@ -7,8 +7,23 @@
 /.idea/kotlinc.xml
 /.idea/checkstyle-idea.xml
 /.idea/caches
+.idea/gradle.xml
 .DS_Store
 /build
 /captures
 .externalNativeBuild
 jacoco.exec
+# Version control
+vcs.xml
+# Android Studio 3 in .gitignore file.
+.idea/caches
+.idea/modules.xml
+# Start MacOS
+.DS_Store
+
+.idea/misc.xml
+.idea/codeStyles/Project.xml
+
+#gradle.properties
+encodings.xml
+codeStyleConfig.xml

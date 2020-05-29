@@ -29,6 +29,7 @@ import com.liulishuo.okdownload.core.file.MultiPointOutputStream;
 
 import java.io.IOException;
 import java.net.SocketException;
+import java.net.UnknownServiceException;
 
 public class DownloadCache {
     private String redirectLocation;
@@ -50,7 +51,8 @@ public class DownloadCache {
         this.outputStream = null;
     }
 
-    @NonNull MultiPointOutputStream getOutputStream() {
+    @NonNull
+    MultiPointOutputStream getOutputStream() {
         if (outputStream == null) throw new IllegalArgumentException();
         return outputStream;
     }
@@ -130,7 +132,10 @@ public class DownloadCache {
 
     public void catchException(IOException e) {
         if (isUserCanceled()) return; // ignored
-
+        if (e instanceof UnknownServiceException) {
+            setUnknownError(e);
+            return;
+        }
         if (e instanceof ResumeFailedException) {
             setPreconditionFailed(e);
         } else if (e instanceof ServerCanceledException) {

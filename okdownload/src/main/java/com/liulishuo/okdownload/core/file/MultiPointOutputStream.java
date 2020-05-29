@@ -77,11 +77,13 @@ public class MultiPointOutputStream {
     volatile Thread runSyncThread;
     final SparseArray<Thread> parkedRunBlockThreadMap = new SparseArray<>();
 
-    @NonNull private final Runnable syncRunnable;
+    @NonNull
+    private final Runnable syncRunnable;
     private String path;
 
     IOException syncException;
-    @NonNull ArrayList<Integer> noMoreStreamList;
+    @NonNull
+    ArrayList<Integer> noMoreStreamList;
 
     @SuppressFBWarnings("IS2_INCONSISTENT_SYNC")
     List<Integer> requireStreamBlocks;
@@ -113,7 +115,7 @@ public class MultiPointOutputStream {
             this.syncRunnable = syncRunnable;
         }
 
-        final File file = task.getFile();
+        final File file = task.getTempFile();
         if (file != null) this.path = file.getAbsolutePath();
     }
 
@@ -141,7 +143,8 @@ public class MultiPointOutputStream {
 
     public void cancelAsync() {
         FILE_IO_EXECUTOR.execute(new Runnable() {
-            @Override public void run() {
+            @Override
+            public void run() {
                 cancel();
             }
         });
@@ -307,8 +310,7 @@ public class MultiPointOutputStream {
     void inspectStreamState(StreamsState state) {
         state.newNoMoreStreamBlockList.clear();
 
-        @SuppressWarnings("unchecked")
-        final List<Integer> clonedList = (List<Integer>) noMoreStreamList.clone();
+        @SuppressWarnings("unchecked") final List<Integer> clonedList = (List<Integer>) noMoreStreamList.clone();
         final Set<Integer> uniqueBlockList = new HashSet<>(clonedList);
         final int noMoreStreamBlockCount = uniqueBlockList.size();
         if (noMoreStreamBlockCount != requireStreamBlocks.size()) {
@@ -503,19 +505,18 @@ public class MultiPointOutputStream {
             @NonNull final Uri uri;
             final boolean isFileScheme = Util.isUriFileScheme(task.getUri());
             if (isFileScheme) {
-                final File file = task.getFile();
-                if (file == null) throw new FileNotFoundException("Filename is not ready!");
+                final File tempFile = task.getTempFile();
+                if (tempFile == null) throw new FileNotFoundException("Filename is not ready!");
 
                 final File parentFile = task.getParentFile();
                 if (!parentFile.exists() && !parentFile.mkdirs()) {
                     throw new IOException("Create parent folder failed!");
                 }
-
-                if (file.createNewFile()) {
-                    Util.d(TAG, "Create new file: " + file.getName());
+                if (tempFile.createNewFile()) {
+                    Util.d(TAG, "Create new tempFile: " + tempFile.getName());
                 }
 
-                uri = Uri.fromFile(file);
+                uri = Uri.fromFile(tempFile);
             } else {
                 uri = task.getUri();
             }
@@ -542,7 +543,7 @@ public class MultiPointOutputStream {
                 // pre allocate length
                 final long totalLength = info.getTotalLength();
                 if (isFileScheme) {
-                    final File file = task.getFile();
+                    final File file = task.getTempFile();
                     final long requireSpace = totalLength - file.length();
                     if (requireSpace > 0) {
                         inspectFreeSpace(new StatFs(file.getAbsolutePath()), requireSpace);
@@ -573,6 +574,6 @@ public class MultiPointOutputStream {
     }
 
     private void inspectValidPath() {
-        if (path == null && task.getFile() != null) path = task.getFile().getAbsolutePath();
+        if (path == null && task.getTempFile() != null) path = task.getTempFile().getAbsolutePath();
     }
 }
