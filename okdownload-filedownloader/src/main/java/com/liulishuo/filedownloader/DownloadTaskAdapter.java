@@ -605,7 +605,7 @@ public class DownloadTaskAdapter implements BaseDownloadTask, BaseDownloadTask.I
             for (Map.Entry<String, String> entry : headerMap.entrySet()) {
                 builder.addHeader(entry.getKey(), entry.getValue());
             }
-//            builder.setAutoCallbackToUIThread(autoCallbackToUIThread);
+            builder.setAutoCallbackToUIThread(autoCallbackToUIThread);
             return builder.build();
         }
     }

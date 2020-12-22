@@ -791,6 +791,17 @@ public class DownloadTask extends IdentifiedTask implements Comparable<DownloadT
         }
 
         /**
+         * Set whether callback to UI thread automatically.
+         * default is {@link #DEFAULT_AUTO_CALLBACK_TO_UI_THREAD}
+         *
+         * @param autoCallbackToUIThread whether callback to ui thread automatically.
+         */
+        public Builder setAutoCallbackToUIThread(boolean autoCallbackToUIThread) {
+            this.autoCallbackToUIThread = autoCallbackToUIThread;
+            return this;
+        }
+
+        /**
          * Set the minimum internal milliseconds of progress callbacks.
          * default is {@link #DEFAULT_MIN_INTERVAL_MILLIS_CALLBACK_PROCESS}
          *

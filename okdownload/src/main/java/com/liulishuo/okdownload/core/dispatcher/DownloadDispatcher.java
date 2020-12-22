@@ -17,6 +17,8 @@
 package com.liulishuo.okdownload.core.dispatcher;
 
 
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -32,7 +34,7 @@ import com.liulishuo.okdownload.core.cause.EndCause;
 import com.liulishuo.okdownload.core.download.DownloadCall;
 import com.liulishuo.okdownload.core.listener.DownloadListener1;
 import com.liulishuo.okdownload.core.listener.DownloadListener4;
-import com.liulishuo.okdownload.core.listener.DownloadListenerBunch;
+import com.liulishuo.okdownload.core.listener.DownloadListenerSameTaskBunch;
 
 import java.io.File;
 import java.net.UnknownHostException;
@@ -77,6 +79,9 @@ public class DownloadDispatcher {
     @SuppressFBWarnings(value = "IS", justification = "Not so urgency")
     private DownloadStore store;
 
+    private final Handler uiHandler;
+
+
     public DownloadDispatcher() {
         this(new ArrayList<DownloadCall>(), new ArrayList<DownloadCall>(),
                 new ArrayList<DownloadCall>(), new ArrayList<DownloadCall>());
@@ -90,6 +95,7 @@ public class DownloadDispatcher {
         this.runningAsyncCalls = runningAsyncCalls;
         this.runningSyncCalls = runningSyncCalls;
         this.finishingCalls = finishingCalls;
+        this.uiHandler = new Handler(Looper.getMainLooper());
     }
 
     public void setDownloadStore(@NonNull DownloadStore store) {
@@ -496,15 +502,23 @@ public class DownloadDispatcher {
         DownloadListener activeListener = call.task.getListener();
         DownloadListener listener = conflictTask.getListener();
         if (listener == activeListener) return;
-        if (activeListener instanceof DownloadListener1) {
-            ((DownloadListener1) activeListener).setAlwaysRecoverAssistModelIfNotSet(true);
+
+        if (listener instanceof DownloadListener1) {
+            ((DownloadListener1) listener).setAlwaysRecoverAssistModelIfNotSet(true);
         } else if (listener instanceof DownloadListener4) {
-            ((DownloadListener4) activeListener).setAlwaysRecoverAssistModelIfNotSet(true);
+            ((DownloadListener4) listener).setAlwaysRecoverAssistModelIfNotSet(true);
         }
-        DownloadListenerBunch newListener = new DownloadListenerBunch.Builder()
-                .append(activeListener)
-                .append(listener)
-                .build();
+
+        DownloadListenerSameTaskBunch newListener;
+        if (activeListener instanceof DownloadListenerSameTaskBunch) {
+            DownloadListenerSameTaskBunch.DownloadListenerWrapper wrapper = new DownloadListenerSameTaskBunch.DownloadListenerWrapper(conflictTask.isAutoCallbackToUIThread(), listener);
+            newListener = ((DownloadListenerSameTaskBunch) activeListener).toBuilder().append(wrapper).build(uiHandler);
+        } else {
+            newListener = new DownloadListenerSameTaskBunch.Builder()
+                    .append(new DownloadListenerSameTaskBunch.DownloadListenerWrapper(call.task.isAutoCallbackToUIThread(), activeListener))
+                    .append(new DownloadListenerSameTaskBunch.DownloadListenerWrapper(conflictTask.isAutoCallbackToUIThread(), listener))
+                    .build(uiHandler);
+        }
         call.task.replaceListener(newListener);
         Util.d(TAG, "task: " + conflictTask.getId()
                 + " is conflicted, rebind listener to active task");
