@@ -501,10 +501,10 @@ public class DownloadDispatcher {
         DownloadListener activeListener = call.task.getListener();
         DownloadListener listener = conflictTask.getListener();
         if (listener == activeListener) return;
-        if (listener instanceof DownloadListener1) {
-            ((DownloadListener1) listener).setAlwaysRecoverAssistModelIfNotSet(true);
+        if (activeListener instanceof DownloadListener1) {
+            ((DownloadListener1) activeListener).setAlwaysRecoverAssistModelIfNotSet(true);
         } else if (listener instanceof DownloadListener4) {
-            ((DownloadListener4) listener).setAlwaysRecoverAssistModelIfNotSet(true);
+            ((DownloadListener4) activeListener).setAlwaysRecoverAssistModelIfNotSet(true);
         }
         DownloadListenerBunch newListener = new DownloadListenerBunch.Builder()
                 .append(activeListener)
