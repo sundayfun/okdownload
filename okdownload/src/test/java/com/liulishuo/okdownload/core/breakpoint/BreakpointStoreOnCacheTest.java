@@ -296,8 +296,6 @@ public class BreakpointStoreOnCacheTest {
         verify(cache, never()).remove(eq(1));
         cache.onTaskEnd(1, EndCause.PRE_ALLOCATE_FAILED, null);
         verify(cache, never()).remove(eq(1));
-        cache.onTaskEnd(1, EndCause.SAME_TASK_BUSY, null);
-        verify(cache, never()).remove(eq(1));
     }
 
     @Test

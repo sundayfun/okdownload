@@ -23,6 +23,5 @@ import com.liulishuo.okdownload.core.cause.EndCause
  */
 data class DownloadResult(val cause: EndCause) {
     fun becauseOfCompleted(): Boolean = cause == EndCause.COMPLETED
-    fun becauseOfRepeatedTask(): Boolean =
-        cause == EndCause.SAME_TASK_BUSY || cause == EndCause.FILE_BUSY
+    fun becauseOfRepeatedTask(): Boolean = cause == EndCause.FILE_BUSY
 }

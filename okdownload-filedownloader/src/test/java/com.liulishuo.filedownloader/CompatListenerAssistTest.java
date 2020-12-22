@@ -218,10 +218,8 @@ public class CompatListenerAssistTest {
         doNothing().when(compatListenerAssist).onTaskFinish(mockTaskAdapter);
 
         compatListenerAssist.taskEnd(mockTask, EndCause.FILE_BUSY, null);
-        compatListenerAssist.taskEnd(mockTask, EndCause.SAME_TASK_BUSY, null);
 
         verify(compatListenerAssist).handleWarn(mockTaskAdapter, EndCause.FILE_BUSY, null);
-        verify(compatListenerAssist).handleWarn(mockTaskAdapter, EndCause.SAME_TASK_BUSY, null);
         verify(compatListenerAssist, times(2)).onTaskFinish(mockTaskAdapter);
         verify(mockProgressAssist, times(2)).clearProgress();
         verify(mockSpeedCalculator, times(2)).flush();

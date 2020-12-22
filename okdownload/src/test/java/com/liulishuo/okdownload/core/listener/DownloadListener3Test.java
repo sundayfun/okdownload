@@ -94,7 +94,5 @@ public class DownloadListener3Test {
         listener3.taskEnd(task, EndCause.FILE_BUSY, realCause);
         verify(listener3).warn(eq(task));
 
-        listener3.taskEnd(task, EndCause.SAME_TASK_BUSY, realCause);
-        verify(listener3, times(2)).warn(eq(task));
     }
 }

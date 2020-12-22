@@ -29,10 +29,7 @@ class DownloadResultTest {
 
     @Test
     fun becauseOfRepeatedTask() {
-        var result = DownloadResult(EndCause.SAME_TASK_BUSY)
-        assert(result.becauseOfRepeatedTask())
-
-        result = DownloadResult(EndCause.FILE_BUSY)
+        var result = DownloadResult(EndCause.FILE_BUSY)
         assert(result.becauseOfRepeatedTask())
     }
 }

@@ -130,16 +130,15 @@ public class DownloadDispatcher {
             OkDownload.with().downloadStrategy().inspectNetworkAvailable();
 
             final Collection<DownloadTask> completedTaskList = new ArrayList<>();
-            final Collection<DownloadTask> sameTaskConflictList = new ArrayList<>();
             final Collection<DownloadTask> fileBusyList = new ArrayList<>();
             for (DownloadTask task : taskList) {
                 if (inspectCompleted(task, completedTaskList)) continue;
-                if (inspectForConflict(task, sameTaskConflictList, fileBusyList)) continue;
+                if (inspectForConflict(task, fileBusyList)) continue;
 
                 enqueueIgnorePriority(task);
             }
             OkDownload.with().callbackDispatcher()
-                    .endTasks(completedTaskList, sameTaskConflictList, fileBusyList);
+                    .endTasks(completedTaskList, fileBusyList);
 
         } catch (UnknownHostException e) {
             final Collection<DownloadTask> errorList = new ArrayList<>(taskList);
@@ -421,15 +420,14 @@ public class DownloadDispatcher {
     }
 
     private boolean inspectForConflict(@NonNull DownloadTask task) {
-        return inspectForConflict(task, null, null);
+        return inspectForConflict(task, null);
     }
 
     private boolean inspectForConflict(@NonNull DownloadTask task,
-                                       @Nullable Collection<DownloadTask> sameTaskList,
                                        @Nullable Collection<DownloadTask> fileBusyList) {
-        return inspectForConflict(task, readyAsyncCalls, sameTaskList, fileBusyList)
-                || inspectForConflict(task, runningAsyncCalls, sameTaskList, fileBusyList)
-                || inspectForConflict(task, runningSyncCalls, sameTaskList, fileBusyList);
+        return inspectForConflict(task, readyAsyncCalls, fileBusyList)
+                || inspectForConflict(task, runningAsyncCalls, fileBusyList)
+                || inspectForConflict(task, runningSyncCalls, fileBusyList);
     }
 
     boolean inspectCompleted(@NonNull DownloadTask task) {
@@ -461,7 +459,6 @@ public class DownloadDispatcher {
 
     boolean inspectForConflict(@NonNull DownloadTask task,
                                @NonNull Collection<DownloadCall> calls,
-                               @Nullable Collection<DownloadTask> sameTaskList,
                                @Nullable Collection<DownloadTask> fileBusyList) {
         final Iterator<DownloadCall> iterator = calls.iterator();
         while (iterator.hasNext()) {
@@ -477,18 +474,16 @@ public class DownloadDispatcher {
                     return false;
                 }
                 attachToActiveListener(call, task);
-                if (sameTaskList != null) {
-                    sameTaskList.add(task);
-                }
                 return true;
             }
 
             final File file = call.getFile();
             final File taskFile = task.getTempFile();
             if (file != null && taskFile != null && file.equals(taskFile)) {
-                attachToActiveListener(call, task);
                 if (fileBusyList != null) {
                     fileBusyList.add(task);
+                } else {
+                    OkDownload.with().callbackDispatcher().dispatch().taskEnd(task, EndCause.FILE_BUSY, null);
                 }
                 return true;
             }

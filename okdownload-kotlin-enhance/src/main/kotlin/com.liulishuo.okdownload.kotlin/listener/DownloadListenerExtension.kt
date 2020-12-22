@@ -21,12 +21,7 @@ import com.liulishuo.okdownload.DownloadTask
 import com.liulishuo.okdownload.core.breakpoint.BreakpointInfo
 import com.liulishuo.okdownload.core.cause.EndCause
 import com.liulishuo.okdownload.core.cause.ResumeFailedCause
-import com.liulishuo.okdownload.core.listener.DownloadListener1
-import com.liulishuo.okdownload.core.listener.DownloadListener2
-import com.liulishuo.okdownload.core.listener.DownloadListener3
-import com.liulishuo.okdownload.core.listener.DownloadListener4
-import com.liulishuo.okdownload.core.listener.DownloadListener4WithSpeed
-import java.lang.Exception
+import com.liulishuo.okdownload.core.listener.*
 
 /**
  * Correspond to [com.liulishuo.okdownload.DownloadListener.taskStart]
@@ -238,7 +233,6 @@ fun DownloadListener.switchToExceptProgressListener(): DownloadListener = when (
         },
         onCompleted = { this.taskEnd(it, EndCause.COMPLETED, null) },
         onCanceled = { this.taskEnd(it, EndCause.CANCELED, null) },
-        onWarn = { this.taskEnd(it, EndCause.SAME_TASK_BUSY, null) },
         onRetry = { task, cause -> this.retry(task, cause) },
         onError = { task, e -> this.taskEnd(task, EndCause.ERROR, e) }
     )

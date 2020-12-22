@@ -133,7 +133,6 @@ public class CompatListenerAssist {
                 handleCanceled(downloadTaskAdapter);
                 break;
             case FILE_BUSY:
-            case SAME_TASK_BUSY:
                 handleWarn(downloadTaskAdapter, cause, realCause);
                 break;
             case COMPLETED:
