@@ -225,14 +225,7 @@ public class DownloadCall extends NamedRunnable implements Comparable<DownloadCa
             start(cache, info);
 
             if (canceled) break;
-            final boolean isFileScheme = Util.isUriFileScheme(task.getUri());
-            //8.rename the temp file to the target file 
-            if (isFileScheme) {
-                boolean renameResult = Util.renameFile(task.getTempFile(), task.getFile());
-                if (!renameResult) {
-                    cache.setUnknownError(new IOException(String.format("rename fail src:%s dest:%s", task.getTempFile().getAbsolutePath(), task.getFile().getAbsolutePath())));
-                }
-            }
+
             // 8. retry if precondition failed.
             if (cache.isPreconditionFailed()
                     && retryCount++ < MAX_COUNT_RETRY_FOR_PRECONDITION_FAILED) {
@@ -243,12 +236,7 @@ public class DownloadCall extends NamedRunnable implements Comparable<DownloadCa
             }
         } while (retry);
 
-        // finish
-        finishing = true;
-        blockChainList.clear();
-
-        final DownloadCache cache = this.cache;
-        if (canceled || cache == null) return;
+        final boolean isFileScheme = Util.isUriFileScheme(task.getUri());
 
         final EndCause cause;
         Exception realCause = null;
@@ -262,9 +250,27 @@ public class DownloadCall extends NamedRunnable implements Comparable<DownloadCa
         } else if (cache.isPreAllocateFailed()) {
             cause = EndCause.PRE_ALLOCATE_FAILED;
             realCause = cache.getRealCause();
+        } else if (isFileScheme) {
+            //9. COMPLETED,  rename the temp file to the target file
+            boolean renameResult = Util.renameFile(task.getTempFile(), task.getFile());
+            if (!renameResult) {
+                cache.setUnknownError(new IOException(String.format("rename fail src:%s dest:%s", task.getTempFile().getAbsolutePath(), task.getFile().getAbsolutePath())));
+                cause = EndCause.ERROR;
+                realCause = cache.getRealCause();
+            } else {
+                cause = EndCause.COMPLETED;
+            }
         } else {
             cause = EndCause.COMPLETED;
         }
+
+        // finish
+        finishing = true;
+        blockChainList.clear();
+
+        final DownloadCache cache = this.cache;
+        if (canceled || cache == null) return;
+
         inspectTaskEnd(cache, cause, realCause);
     }
 
