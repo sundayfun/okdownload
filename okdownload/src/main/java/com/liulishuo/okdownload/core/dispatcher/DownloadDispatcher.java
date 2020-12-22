@@ -17,6 +17,8 @@
 package com.liulishuo.okdownload.core.dispatcher;
 
 
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -32,7 +34,7 @@ import com.liulishuo.okdownload.core.cause.EndCause;
 import com.liulishuo.okdownload.core.download.DownloadCall;
 import com.liulishuo.okdownload.core.listener.DownloadListener1;
 import com.liulishuo.okdownload.core.listener.DownloadListener4;
-import com.liulishuo.okdownload.core.listener.DownloadListenerBunch;
+import com.liulishuo.okdownload.core.listener.DownloadListenerSameTaskBunch;
 
 import java.io.File;
 import java.net.UnknownHostException;
@@ -77,6 +79,9 @@ public class DownloadDispatcher {
     @SuppressFBWarnings(value = "IS", justification = "Not so urgency")
     private DownloadStore store;
 
+    private final Handler uiHandler;
+
+
     public DownloadDispatcher() {
         this(new ArrayList<DownloadCall>(), new ArrayList<DownloadCall>(),
                 new ArrayList<DownloadCall>(), new ArrayList<DownloadCall>());
@@ -90,6 +95,7 @@ public class DownloadDispatcher {
         this.runningAsyncCalls = runningAsyncCalls;
         this.runningSyncCalls = runningSyncCalls;
         this.finishingCalls = finishingCalls;
+        this.uiHandler = new Handler(Looper.getMainLooper());
     }
 
     public void setDownloadStore(@NonNull DownloadStore store) {
@@ -130,16 +136,15 @@ public class DownloadDispatcher {
             OkDownload.with().downloadStrategy().inspectNetworkAvailable();
 
             final Collection<DownloadTask> completedTaskList = new ArrayList<>();
-            final Collection<DownloadTask> sameTaskConflictList = new ArrayList<>();
             final Collection<DownloadTask> fileBusyList = new ArrayList<>();
             for (DownloadTask task : taskList) {
                 if (inspectCompleted(task, completedTaskList)) continue;
-                if (inspectForConflict(task, sameTaskConflictList, fileBusyList)) continue;
+                if (inspectForConflict(task, fileBusyList)) continue;
 
                 enqueueIgnorePriority(task);
             }
             OkDownload.with().callbackDispatcher()
-                    .endTasks(completedTaskList, sameTaskConflictList, fileBusyList);
+                    .endTasks(completedTaskList, fileBusyList);
 
         } catch (UnknownHostException e) {
             final Collection<DownloadTask> errorList = new ArrayList<>(taskList);
@@ -421,15 +426,14 @@ public class DownloadDispatcher {
     }
 
     private boolean inspectForConflict(@NonNull DownloadTask task) {
-        return inspectForConflict(task, null, null);
+        return inspectForConflict(task, null);
     }
 
     private boolean inspectForConflict(@NonNull DownloadTask task,
-                                       @Nullable Collection<DownloadTask> sameTaskList,
                                        @Nullable Collection<DownloadTask> fileBusyList) {
-        return inspectForConflict(task, readyAsyncCalls, sameTaskList, fileBusyList)
-                || inspectForConflict(task, runningAsyncCalls, sameTaskList, fileBusyList)
-                || inspectForConflict(task, runningSyncCalls, sameTaskList, fileBusyList);
+        return inspectForConflict(task, readyAsyncCalls, fileBusyList)
+                || inspectForConflict(task, runningAsyncCalls, fileBusyList)
+                || inspectForConflict(task, runningSyncCalls, fileBusyList);
     }
 
     boolean inspectCompleted(@NonNull DownloadTask task) {
@@ -461,7 +465,6 @@ public class DownloadDispatcher {
 
     boolean inspectForConflict(@NonNull DownloadTask task,
                                @NonNull Collection<DownloadCall> calls,
-                               @Nullable Collection<DownloadTask> sameTaskList,
                                @Nullable Collection<DownloadTask> fileBusyList) {
         final Iterator<DownloadCall> iterator = calls.iterator();
         while (iterator.hasNext()) {
@@ -477,18 +480,16 @@ public class DownloadDispatcher {
                     return false;
                 }
                 attachToActiveListener(call, task);
-                if (sameTaskList != null) {
-                    sameTaskList.add(task);
-                }
                 return true;
             }
 
             final File file = call.getFile();
             final File taskFile = task.getTempFile();
             if (file != null && taskFile != null && file.equals(taskFile)) {
-                attachToActiveListener(call, task);
                 if (fileBusyList != null) {
                     fileBusyList.add(task);
+                } else {
+                    OkDownload.with().callbackDispatcher().dispatch().taskEnd(task, EndCause.FILE_BUSY, null);
                 }
                 return true;
             }
@@ -501,15 +502,23 @@ public class DownloadDispatcher {
         DownloadListener activeListener = call.task.getListener();
         DownloadListener listener = conflictTask.getListener();
         if (listener == activeListener) return;
+
         if (listener instanceof DownloadListener1) {
             ((DownloadListener1) listener).setAlwaysRecoverAssistModelIfNotSet(true);
         } else if (listener instanceof DownloadListener4) {
             ((DownloadListener4) listener).setAlwaysRecoverAssistModelIfNotSet(true);
         }
-        DownloadListenerBunch newListener = new DownloadListenerBunch.Builder()
-                .append(activeListener)
-                .append(listener)
-                .build();
+
+        DownloadListenerSameTaskBunch newListener;
+        if (activeListener instanceof DownloadListenerSameTaskBunch) {
+            DownloadListenerSameTaskBunch.DownloadListenerWrapper wrapper = new DownloadListenerSameTaskBunch.DownloadListenerWrapper(conflictTask.isAutoCallbackToUIThread(), listener);
+            newListener = ((DownloadListenerSameTaskBunch) activeListener).toBuilder().append(wrapper).build(uiHandler);
+        } else {
+            newListener = new DownloadListenerSameTaskBunch.Builder()
+                    .append(new DownloadListenerSameTaskBunch.DownloadListenerWrapper(call.task.isAutoCallbackToUIThread(), activeListener))
+                    .append(new DownloadListenerSameTaskBunch.DownloadListenerWrapper(conflictTask.isAutoCallbackToUIThread(), listener))
+                    .build(uiHandler);
+        }
         call.task.replaceListener(newListener);
         Util.d(TAG, "task: " + conflictTask.getId()
                 + " is conflicted, rebind listener to active task");

@@ -27,25 +27,13 @@ import com.liulishuo.okdownload.core.dispatcher.DownloadDispatcher
 import com.liulishuo.okdownload.kotlin.listener.createListener
 import com.liulishuo.okdownload.kotlin.listener.onTaskEnd
 import com.liulishuo.okdownload.kotlin.listener.onTaskStart
-import io.mockk.MockKAnnotations
-import io.mockk.confirmVerified
-import io.mockk.every
+import io.mockk.*
 import io.mockk.impl.annotations.MockK
-import io.mockk.mockk
-import io.mockk.spyk
-import io.mockk.verify
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import java.lang.Exception
-import java.lang.IllegalStateException
 
 @RunWith(RobolectricTestRunner::class)
 class DownloadTaskExtensionTest {
@@ -211,10 +199,6 @@ class DownloadTaskExtensionTest {
             assert(result.becauseOfRepeatedTask())
         }
 
-        every { mockTask.enqueue(any()) } answers {
-            val listener = it.invocation.args[0] as DownloadListener
-            listener.taskEnd(mockTask, EndCause.SAME_TASK_BUSY, null)
-        }
         runBlocking {
             val result = mockTask.await()
             assert(result.becauseOfRepeatedTask())

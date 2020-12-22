@@ -231,11 +231,10 @@ public class CallbackDispatcherTest {
     @Test
     public void endTasks() {
         final Collection<DownloadTask> completedTaskCollection = new ArrayList<>();
-        final Collection<DownloadTask> sameTaskConflictCollection = new ArrayList<>();
         final Collection<DownloadTask> fileBusyCollection = new ArrayList<>();
 
         dispatcher
-                .endTasks(completedTaskCollection, sameTaskConflictCollection, fileBusyCollection);
+                .endTasks(completedTaskCollection, fileBusyCollection);
         verify(handler, never()).post(any(Runnable.class));
 
         final DownloadTask autoUiTask = mock(DownloadTask.class);
@@ -253,27 +252,22 @@ public class CallbackDispatcherTest {
         completedTaskCollection.add(autoUiTask);
         completedTaskCollection.add(nonUiTask);
 
-        sameTaskConflictCollection.add(autoUiTask);
-        sameTaskConflictCollection.add(nonUiTask);
 
         fileBusyCollection.add(autoUiTask);
         fileBusyCollection.add(nonUiTask);
 
         dispatcher
-                .endTasks(completedTaskCollection, sameTaskConflictCollection, fileBusyCollection);
+                .endTasks(completedTaskCollection, fileBusyCollection);
 
         verify(nonUiListener)
                 .taskEnd(eq(nonUiTask), eq(EndCause.COMPLETED), nullable(Exception.class));
-        verify(nonUiListener)
-                .taskEnd(eq(nonUiTask), eq(EndCause.SAME_TASK_BUSY), nullable(Exception.class));
+
         verify(nonUiListener)
                 .taskEnd(eq(nonUiTask), eq(EndCause.FILE_BUSY), nullable(Exception.class));
 
         verify(handler).post(any(Runnable.class));
         verify(autoUiListener)
                 .taskEnd(eq(autoUiTask), eq(EndCause.COMPLETED), nullable(Exception.class));
-        verify(autoUiListener)
-                .taskEnd(eq(autoUiTask), eq(EndCause.SAME_TASK_BUSY), nullable(Exception.class));
         verify(autoUiListener)
                 .taskEnd(eq(autoUiTask), eq(EndCause.FILE_BUSY), nullable(Exception.class));
     }

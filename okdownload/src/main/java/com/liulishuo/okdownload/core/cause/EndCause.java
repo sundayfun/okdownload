@@ -21,6 +21,5 @@ public enum EndCause {
     ERROR,
     CANCELED,
     FILE_BUSY,
-    SAME_TASK_BUSY,
     PRE_ALLOCATE_FAILED
 }

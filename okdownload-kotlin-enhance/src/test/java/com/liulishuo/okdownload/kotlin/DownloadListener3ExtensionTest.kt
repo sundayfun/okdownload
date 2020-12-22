@@ -20,21 +20,9 @@ import com.liulishuo.okdownload.DownloadTask
 import com.liulishuo.okdownload.core.cause.EndCause
 import com.liulishuo.okdownload.core.cause.ResumeFailedCause
 import com.liulishuo.okdownload.core.listener.assist.Listener1Assist
-import com.liulishuo.okdownload.kotlin.listener.createListener3
-import com.liulishuo.okdownload.kotlin.listener.onCanceled
-import com.liulishuo.okdownload.kotlin.listener.onCompleted
-import com.liulishuo.okdownload.kotlin.listener.onConnected
-import com.liulishuo.okdownload.kotlin.listener.onError
-import com.liulishuo.okdownload.kotlin.listener.onProgress
-import com.liulishuo.okdownload.kotlin.listener.onRetry
-import com.liulishuo.okdownload.kotlin.listener.onStarted
-import com.liulishuo.okdownload.kotlin.listener.onWarn
-import io.mockk.MockKAnnotations
-import io.mockk.confirmVerified
-import io.mockk.every
+import com.liulishuo.okdownload.kotlin.listener.*
+import io.mockk.*
 import io.mockk.impl.annotations.MockK
-import io.mockk.mockk
-import io.mockk.verify
 import org.junit.Before
 import org.junit.Test
 
@@ -80,7 +68,6 @@ class DownloadListener3ExtensionTest {
 
         every { mockTerminal.invoke() } returns Unit
 
-        listener3.taskEnd(mockTask, EndCause.SAME_TASK_BUSY, mockException, mockListener1Model)
         listener3.retry(mockTask, resumeFailedCause)
         listener3.connected(mockTask, blockCount, currentOffset, totalLength)
         listener3.taskStart(mockTask, mockListener1Model)
@@ -121,7 +108,6 @@ class DownloadListener3ExtensionTest {
         every { onError.invoke(mockTask, mockException) } returns Unit
         every { onProgress.invoke(mockTask, currentOffset, totalLength) } returns Unit
 
-        listener3.taskEnd(mockTask, EndCause.SAME_TASK_BUSY, mockException, mockListener1Model)
         verify { onWarn.invoke(mockTask) }
         verify { mockTerminal.invoke() }
         confirmVerified(onWarn)

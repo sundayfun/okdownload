@@ -51,8 +51,7 @@ public class DownloadContext {
 
     private final DownloadTask[] tasks;
     volatile boolean started = false;
-    @Nullable
-    final DownloadContextListener contextListener;
+    @Nullable final DownloadContextListener contextListener;
     private final QueueSet set;
     private Handler uiHandler;
 
@@ -116,8 +115,7 @@ public class DownloadContext {
             Collections.addAll(scheduleTaskList, tasks);
             Collections.sort(scheduleTaskList);
             executeOnSerialExecutor(new Runnable() {
-                @Override
-                public void run() {
+                @Override public void run() {
                     for (DownloadTask task : scheduleTaskList) {
                         if (!isStarted()) {
                             callbackQueueEndOnSerialLoop(task.isAutoCallbackToUIThread());
@@ -149,8 +147,7 @@ public class DownloadContext {
         if (isAutoCallbackToUIThread) {
             if (uiHandler == null) uiHandler = new Handler(Looper.getMainLooper());
             uiHandler.post(new Runnable() {
-                @Override
-                public void run() {
+                @Override public void run() {
                     contextListener.queueEnd(DownloadContext.this);
                 }
             });
@@ -222,6 +219,9 @@ public class DownloadContext {
             if (set.syncBufferIntervalMillis != null) {
                 taskBuilder.setSyncBufferIntervalMillis(set.syncBufferIntervalMillis);
             }
+            if (set.autoCallbackToUIThread != null) {
+                taskBuilder.setAutoCallbackToUIThread(set.autoCallbackToUIThread);
+            }
             if (set.minIntervalMillisCallbackProcess != null) {
                 taskBuilder
                         .setMinIntervalMillisCallbackProcess(set.minIntervalMillisCallbackProcess);
@@ -263,6 +263,7 @@ public class DownloadContext {
         private Integer syncBufferSize;
         private Integer syncBufferIntervalMillis;
 
+        private Boolean autoCallbackToUIThread;
         private Integer minIntervalMillisCallbackProcess;
 
         private Boolean passIfAlreadyCompleted;
@@ -351,6 +352,17 @@ public class DownloadContext {
             return this;
         }
 
+        public boolean isAutoCallbackToUIThread() {
+            return autoCallbackToUIThread == null
+                    ? DownloadTask.Builder.DEFAULT_AUTO_CALLBACK_TO_UI_THREAD
+                    : autoCallbackToUIThread;
+        }
+
+        public QueueSet setAutoCallbackToUIThread(Boolean autoCallbackToUIThread) {
+            this.autoCallbackToUIThread = autoCallbackToUIThread;
+            return this;
+        }
+
         public int getMinIntervalMillisCallbackProcess() {
             return minIntervalMillisCallbackProcess == null
                     ? DownloadTask.Builder.DEFAULT_MIN_INTERVAL_MILLIS_CALLBACK_PROCESS
@@ -390,10 +402,8 @@ public class DownloadContext {
 
     static class QueueAttachListener extends DownloadListener2 {
         private final AtomicInteger remainCount;
-        @NonNull
-        private final DownloadContextListener contextListener;
-        @NonNull
-        private final DownloadContext hostContext;
+        @NonNull private final DownloadContextListener contextListener;
+        @NonNull private final DownloadContext hostContext;
 
         QueueAttachListener(@NonNull DownloadContext context,
                             @NonNull DownloadContextListener contextListener, int taskCount) {
@@ -402,8 +412,7 @@ public class DownloadContext {
             this.hostContext = context;
         }
 
-        @Override
-        public void taskStart(@NonNull DownloadTask task) {
+        @Override public void taskStart(@NonNull DownloadTask task) {
         }
 
         @Override

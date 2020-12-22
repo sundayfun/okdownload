@@ -49,7 +49,6 @@ public abstract class DownloadListener3 extends DownloadListener1 {
                 error(task, realCause);
                 break;
             case FILE_BUSY:
-            case SAME_TASK_BUSY:
                 warn(task);
                 break;
             default:

@@ -50,7 +50,6 @@ import java.util.concurrent.ExecutorService;
 import static com.liulishuo.okdownload.TestUtils.mockOkDownload;
 import static com.liulishuo.okdownload.core.cause.EndCause.CANCELED;
 import static com.liulishuo.okdownload.core.cause.EndCause.FILE_BUSY;
-import static com.liulishuo.okdownload.core.cause.EndCause.SAME_TASK_BUSY;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -143,10 +142,6 @@ public class DownloadDispatcherTest {
         assertThat(readyAsyncCalls).containsOnlyOnce(readyCall);
         assertThat(runningAsyncCalls).containsOnlyOnce(runningAsyncCall);
         assertThat(runningSyncCalls).containsOnlyOnce(runningSyncCall);
-
-        verifyTaskEnd(mockReadyTask, SAME_TASK_BUSY, null);
-        verifyTaskEnd(mockRunningAsyncTask, SAME_TASK_BUSY, null);
-        verifyTaskEnd(mockRunningSyncTask, SAME_TASK_BUSY, null);
 
         final DownloadTask mockFileBusyTask1 = mockTask();
         doReturn(mockReadyTask.getFile()).when(mockFileBusyTask1).getFile();
